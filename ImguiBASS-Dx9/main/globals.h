@@ -10,15 +10,42 @@
 static LPDIRECT3D9              g_pD3D = NULL;
 static LPDIRECT3DDEVICE9        g_pd3dDevice = NULL;
 static D3DPRESENT_PARAMETERS    g_d3dpp = { NULL };
+using namespace std;
 // Forward declare message handler from imgui_impl_win32.cpp
 // Data
+
+LPCWSTR OpenFileDialog(TCHAR szFileName[]) {
+    OPENFILENAME ofn;       // common dialog box structure
+    HWND hwnd;              // owner window
+    HANDLE hf;              // file handle
+    // Initialize OPENFILENAME
+    ZeroMemory(&ofn, sizeof(OPENFILENAME));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = (LPWSTR)szFileName;
+    // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+    // use the contents of szFile to initialize itself.
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = (LPWSTR)L"MP3 File\0*.*\0File of MP3\0*.mp3\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    // Display the Open dialog box. 
+    if (GetOpenFileName(&ofn) == TRUE) 
+    {
+       hf = CreateFile(ofn.lpstrFile, GENERIC_READ, 0, (LPSECURITY_ATTRIBUTES)NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, (HANDLE)NULL);
+       return (LPCWSTR)szFileName;
+    }
+    return (LPCWSTR)L"";
+}
 namespace DX_9
 {
     // Helper Functions
     bool CreateDeviceD3D(HWND hWnd)
     {
-        if ((g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL)
-            return false;
+        g_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
 
         // Create the D3DDevice
         ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
@@ -52,7 +79,7 @@ bool active = true;
 namespace IMGUIRENDER
 {
     const char* window_title = "IMGUI BASS by RiritoXXL";
-    ImVec2 window_size = { 400, 400 };
+    ImVec2 window_size{ 400, 400 };
     DWORD window_flags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize;
     void Render()
     {
@@ -60,8 +87,10 @@ namespace IMGUIRENDER
         ImGui::SetNextWindowBgAlpha(1.0f);
         ImGui::Begin(window_title, &active, window_flags);
         {
-            if (ImGui::Button("Play Music")) {
-                MessageBoxA(0, "Coming Soon!!!", "ImGui BASS", MB_ICONINFORMATION | MB_OK);
+            if (ImGui::Button("Play Music")) 
+            {
+                TCHAR openedFileName[MAX_PATH];
+                OpenFileDialog(openedFileName);
             }
         }
         ImGui::End();
